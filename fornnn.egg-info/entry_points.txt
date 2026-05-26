@@ -1,0 +1,2 @@
+[console_scripts]
+fornnn = fornnn.__main__:app

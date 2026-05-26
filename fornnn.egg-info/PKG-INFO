@@ -1,0 +1,32 @@
+Metadata-Version: 2.4
+Name: fornnn
+Version: 0.1.0
+Summary: Terminal-based forensic file manager inspired by nnn
+Author-email: Deepam <deepam@example.com>
+License: MIT
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: textual>=0.50.0
+Requires-Dist: typer>=0.9.0
+Requires-Dist: pytsk3>=20210514
+Requires-Dist: libewf-python>=20201201
+Requires-Dist: python-magic>=0.4.27
+Requires-Dist: yara-python>=4.5.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: rich>=13.0.0
+
+# fornnn
+
+Terminal-based forensic file manager inspired by `nnn`.
+
+## Installation
+
+```bash
+pip install .
+```
+
+## Usage
+
+```bash
+fornnn path/to/evidence.e01
+```

@@ -1,0 +1,26 @@
+Create a high-performance, purely mouse-driven terminal forensic file manager in Python named `fornnn`, following these specific requirements:
+
+### 1. Visual & UX Philosophy
+- **Theme:** Use Textual's built-in **`dracula`** theme by default. Support dynamic theme switching via the mouse-clickable "Theme" palette in the footer (cycling through Dracula, Monokai, Nord, Tokyo Night).
+- **Navigation:** Supports both mouse-driven interaction and standard Arrow Key navigation. Use a high-visibility **`>>> `** prefix in the tree label to identify the currently selected/highlighted node.
+- **Layout:** A split-pane TUI using `Textual`:
+    - **Left Pane (30%):** A custom `Tree` widget with vertical guides that automatically detects forensic image partitions and navigates filesystems using `pytsk3`.
+    - **Right Top (50%):** Metadata panel with a centered **EXTRACT** button at the bottom.
+    - **Right Bottom (50%):** A scrollable Hex Viewer with offset column, hex bytes, and ASCII translation.
+- **Dynamic Response:** Selecting any item (Image Root, Partition, Folder, or File) must instantly update the metadata and hex panes.
+
+### 2. Backend & Performance
+- **Evidence Abstraction:** Automatically handle RAW/DD and E01 (using `pyewf`) images. 
+- **Virtual Filesystem (VFS):** Implement an abstraction layer for physical image offsets.
+- **Async Workers:** All heavy operations MUST run in background threads to prevent UI lag.
+- **Recursive Extraction:** Support recursive folder extraction and full partition dumping directly to the CWD.
+
+### 3. Packaging & Dependencies
+- **Installation:** Make it installable as a package via `pyproject.toml`.
+- **Core Dependencies:** `textual`, `typer`, `pytsk3`, `libewf-python`, `python-magic`, `rich`.
+
+### 4. Implementation Details
+- **Markup Safety:** Use `rich.markup.escape` when rendering metadata to prevent `MarkupError` from complex strings.
+- **Style Compatibility:** CRITICAL: Use strictly standard ANSI color names (cyan, magenta, green, red, gray) for all Rich `Text` and markup stylization. Do NOT pass Textual design tokens (like `$primary`) to Rich methods, as it will cause a `MissingStyle` crash.
+- **Dynamic Theming:** Change the `self.theme` property in the App class to switch between built-in Textual themes. Ensure CSS uses design tokens (e.g. `$primary`) so styles update automatically.
+- **Selection Cursor:** Prepend a bold **`>>> `** string to the label of the `cursor_node` in the Tree's `render_label` method.
