@@ -5,7 +5,7 @@ Terminal-based forensic file manager inspired by `nnn`.
 ## Installation
 
 ```bash
-pip install .
+pipx install .
 ```
 
 ## Usage
