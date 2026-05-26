@@ -1,26 +1,27 @@
 Create a high-performance, purely mouse-driven terminal forensic file manager in Python named `fornnn`, following these specific requirements:
 
 ### 1. Visual & UX Philosophy
-- **Theme:** Use Textual's built-in **`dracula`** theme by default. Support dynamic theme switching via the mouse-clickable "Theme" palette in the footer (cycling through Dracula, Monokai, Nord, Tokyo Night).
-- **Navigation:** Supports both mouse-driven interaction and standard Arrow Key navigation. Use a high-visibility **`>>> `** prefix in the tree label to identify the currently selected/highlighted node.
-- **Layout:** A split-pane TUI using `Textual`:
-    - **Left Pane (30%):** A custom `Tree` widget with vertical guides that automatically detects forensic image partitions and navigates filesystems using `pytsk3`.
-    - **Right Top (50%):** Metadata panel with a centered **EXTRACT** button at the bottom.
+- **Theme:** Use Textual's **default theme engine**. Avoid hardcoded theme names or specific hex colors; instead, use semantic design tokens like `$primary`, `$accent`, `$success`, and `$surface` to ensure perfect integration with the user's terminal environment.
+- **Layout:** A polished, split-pane TUI using `Textual`:
+    - **Global Layout:** Use `padding: 1` on the screen and `margin: 1` between panes for a modern, spacious look.
+    - **Left Pane (30%):** A custom `Tree` widget with vertical guides and a high-visibility **`>>> `** prefix for the selected node.
+    - **Right Top (50%):** Metadata panel with a compact, centered **EXTRACT** button at the bottom (approx 20 cells wide).
     - **Right Bottom (50%):** A scrollable Hex Viewer with offset column, hex bytes, and ASCII translation.
-- **Dynamic Response:** Selecting any item (Image Root, Partition, Folder, or File) must instantly update the metadata and hex panes.
+- **Navigation:** Purely mouse-driven. Use clicks to select files/partitions and expand folders. Scrolling must work across all panes. Selecting any item (Image Root, Partition, Folder, or File) must instantly update the metadata and hex panes.
 
 ### 2. Backend & Performance
 - **Evidence Abstraction:** Automatically handle RAW/DD and E01 (using `pyewf`) images. 
-- **Virtual Filesystem (VFS):** Implement an abstraction layer for physical image offsets.
-- **Async Workers:** All heavy operations MUST run in background threads to prevent UI lag.
-- **Recursive Extraction:** Support recursive folder extraction and full partition dumping directly to the CWD.
+- **Virtual Filesystem (VFS):** Implement an abstraction layer that maps physical image offsets to a navigable folder structure without mounting.
+- **Async Workers:** All heavy operations (extraction, hashing) MUST run in background threads (using `run_worker` and `functools.partial`) to prevent UI lag.
+- **Recursive Extraction:** Support surgical file saving, recursive folder extraction, and full partition dumping directly to the CWD.
+- **Forensic Safety:** All operations must be strictly read-only.
 
 ### 3. Packaging & Dependencies
-- **Installation:** Make it installable as a package via `pyproject.toml`.
+- **Installation:** Make it installable as a package via `pyproject.toml` with a `fornnn` entry point.
 - **Core Dependencies:** `textual`, `typer`, `pytsk3`, `libewf-python`, `python-magic`, `rich`.
 
 ### 4. Implementation Details
 - **Markup Safety:** Use `rich.markup.escape` when rendering metadata to prevent `MarkupError` from complex strings.
-- **Style Compatibility:** CRITICAL: Use strictly standard ANSI color names (cyan, magenta, green, red, gray) for all Rich `Text` and markup stylization. Do NOT pass Textual design tokens (like `$primary`) to Rich methods, as it will cause a `MissingStyle` crash.
-- **Dynamic Theming:** Change the `self.theme` property in the App class to switch between built-in Textual themes. Ensure CSS uses design tokens (e.g. `$primary`) so styles update automatically.
+- **Style Compatibility:** Use strictly standard ANSI color names (cyan, magenta, green, red, gray) for all Rich `Text` and markup stylization to prevent `MissingStyle` crashes.
 - **Selection Cursor:** Prepend a bold **`>>> `** string to the label of the `cursor_node` in the Tree's `render_label` method.
+- **Comprehensive Previews:** Show raw hex data for partitions and image headers, in addition to standard file content previews.

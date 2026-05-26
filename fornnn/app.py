@@ -17,17 +17,14 @@ from fornnn.analysis.engine import ArtifactEngine
 
 class ForNnnApp(App):
     """
-    A forensic browser with dynamic theming and high-visibility cursor.
-    Uses Textual's built-in theme engine.
+    A minimal, mouse-driven forensic browser using default Textual theming.
+    Focused entirely on navigation and extraction.
     """
     
-    # Available themes to cycle through
-    THEMES = ["dracula", "monokai", "nord", "tokyo-night", "textual"]
-    theme = "dracula"
-
     CSS = """
     Screen {
         layout: vertical;
+        padding: 1;
     }
 
     #main-container {
@@ -36,7 +33,9 @@ class ForNnnApp(App):
 
     #left-pane {
         width: 30%;
-        border-right: solid $primary;
+        border-right: solid $primary-muted;
+        background: $boost;
+        margin-right: 1;
     }
     
     #left-pane:hover { border-right: solid $accent; }
@@ -54,12 +53,14 @@ class ForNnnApp(App):
 
     #metadata-panel {
         height: 50%;
-        border-bottom: solid $primary;
+        border-bottom: solid $primary-muted;
     }
 
     #hex-viewer {
         height: 50%;
+        border: solid $primary-muted;
         padding: 1;
+        background: $boost;
     }
     
     #hex-viewer:focus { border: solid $accent; }
@@ -71,7 +72,6 @@ class ForNnnApp(App):
 
     BINDINGS = [
         ("q", "quit", "Quit"),
-        ("t", "toggle_theme", "Theme"),
     ]
 
     def __init__(self, image_path: Optional[str] = None):
@@ -80,6 +80,8 @@ class ForNnnApp(App):
         self.metadata = None
         self.artifact_engine = ArtifactEngine()
         self._load_evidence()
+        # Track the active VFS to avoid expensive tree walks
+        self.current_vfs: Optional[VFS] = None
 
     def _load_evidence(self):
         if not self.image_path: return
@@ -95,7 +97,7 @@ class ForNnnApp(App):
             if self.metadata:
                 yield ForensicDirectoryTree(self.metadata, self.artifact_engine, id="left-pane")
             else:
-                yield Static("[bold red]No evidence loaded[/]", id="left-pane")
+                yield Static("No evidence loaded", id="left-pane")
             
             with Vertical(id="right-pane"):
                 yield MetadataPanel(id="metadata-panel")
@@ -107,18 +109,6 @@ class ForNnnApp(App):
             self.query_one(ForensicDirectoryTree).focus()
         except Exception:
             pass
-
-    def action_toggle_theme(self) -> None:
-        """Cycle through available Textual themes reactively."""
-        try:
-            curr_idx = self.THEMES.index(self.theme)
-        except ValueError:
-            curr_idx = 0
-            
-        next_idx = (curr_idx + 1) % len(self.THEMES)
-        new_theme = self.THEMES[next_idx]
-        self.theme = new_theme
-        self.notify(f"Theme: {new_theme.upper()}", title="UI Update")
 
     def on_tree_node_highlighted(self, event: Tree.NodeHighlighted) -> None:
         """Update UI on highlight."""
@@ -136,10 +126,12 @@ class ForNnnApp(App):
         self.query_one(MetadataPanel).node = node
         tree = self.query_one(ForensicDirectoryTree)
 
-        # Show hex for all selections
+        # Resolve and store the active VFS for this node
+        vfs = tree._find_vfs(tree_node) if tree_node else None
+        self.current_vfs = vfs
+
         hex_data = b""
         if isinstance(node, VFSNode):
-            vfs = tree._find_vfs(tree_node) if tree_node else tree._find_vfs_path("")
             if vfs:
                 hex_data = vfs.read_file(str(node.path), length=4096)
                 if node.type != FileType.DIR:
@@ -172,17 +164,16 @@ class ForNnnApp(App):
             if not node: return
             
             tree = self.query_one(ForensicDirectoryTree)
-            vfs = None
-            if isinstance(node, PartitionInfo):
+            vfs = self.current_vfs
+            
+            # Ensure vfs is valid for partition selections
+            if isinstance(node, PartitionInfo) and not vfs:
                  vfs = VFS(tree.image_handle, offset=node.start_offset)
-            else:
-                for tree_node in tree.walk():
-                    if tree_node.data == node:
-                        vfs = tree._find_vfs(tree_node)
-                        break
             
             if vfs:
                 self.run_worker(partial(self.extract_recursive_async, node, vfs), thread=True)
+            else:
+                self.notify("VFS not initialized for this item", severity="error")
 
     def extract_recursive_async(self, node: Union[VFSNode, PartitionInfo], vfs: VFS):
         try:
@@ -216,7 +207,7 @@ class ForNnnApp(App):
         count = 1
         orig_out_path = out_path
         while out_path.exists():
-            out_path = orig_out_path.parent / f"{orig_out_path.stem}_{count}{out_path.suffix}"
+            out_path = orig_out_path.parent / f"{orig_out_path.stem}_{count}{orig_out_path.suffix}"
             count += 1
         with open(out_path, "wb") as f:
             f.write(data)

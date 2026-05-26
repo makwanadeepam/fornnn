@@ -8,7 +8,7 @@ from fornnn.evidence.base import PartitionInfo, EvidenceMetadata
 class MetadataPanel(Vertical):
     """
     Displays metadata with a theme-aware layout.
-    Values are escaped to prevent MarkupErrors.
+    Refined with compact centered button and better spacing.
     """
     node = reactive(None)
     extra_info = reactive({})
@@ -18,7 +18,7 @@ class MetadataPanel(Vertical):
         layout: vertical;
         background: $surface;
         color: $text;
-        padding: 1 2;
+        padding: 1;
     }
     #metadata-text {
         height: 1fr;
@@ -26,20 +26,21 @@ class MetadataPanel(Vertical):
         border: solid $primary-muted;
         padding: 1;
         background: $boost;
+        margin-bottom: 1;
     }
     #button-row {
-        height: 5;
+        height: 3;
         width: 100%;
         content-align: center middle;
-        margin-top: 1;
     }
     #extract-btn { 
         background: $success; 
         color: $text;
-        width: 32;
-        height: 3;
+        width: 20;
+        height: 1;
         text-style: bold;
         border: none;
+        margin: 0;
     }
     #extract-btn:hover { background: $success-lighten-1; }
     """
@@ -100,7 +101,7 @@ class MetadataPanel(Vertical):
                 "",
                 "[italic yellow]Select a partition or folder to explore content.[/]"
             ]
-            extract_btn.display = False # Don't extract the whole image file (already on disk)
+            extract_btn.display = False
         else:
             md = [f"Selected: {escape(str(self.node))}"]
 

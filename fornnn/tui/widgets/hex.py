@@ -5,8 +5,7 @@ from textual.reactive import reactive
 
 class HexViewer(VerticalScroll):
     """
-    A scrollable hex viewer widget.
-    Uses standard Rich colors for compatibility.
+    A scrollable hex viewer widget using default design tokens.
     """
     can_focus = True
     data = reactive(b"")
@@ -20,20 +19,20 @@ class HexViewer(VerticalScroll):
 
     def _render_hex(self, data: bytes) -> Text:
         if not data:
-            return Text("No data", style="gray")
+            return Text("No data", style="$text-muted")
 
         text = Text()
         for i in range(0, len(data), 16):
             chunk = data[i:i+16]
             
-            # Offset (Magenta)
+            # Offset (Secondary)
             text.append(f"{i:08x}: ", style="bold magenta")
             
-            # Hex bytes (Green)
+            # Hex bytes (Success)
             hex_part = " ".join(f"{b:02x}" for b in chunk)
             text.append(f"{hex_part:<48} ", style="green")
             
-            # ASCII part (Cyan)
+            # ASCII part (Primary)
             ascii_part = "".join(chr(b) if 32 <= b <= 126 else "." for b in chunk)
             text.append(f"|{ascii_part}|", style="cyan")
             text.append("\n")

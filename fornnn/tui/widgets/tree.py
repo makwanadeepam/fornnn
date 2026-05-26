@@ -10,7 +10,7 @@ from typing import Optional
 
 class ForensicDirectoryTree(Tree):
     """
-    A Tree widget with dynamic labels and a visible selection cursor.
+    A Tree widget with high-visibility selection cursor using default theming.
     """
     def __init__(self, metadata: EvidenceMetadata, artifact_engine: ArtifactEngine, *args, **kwargs):
         self.metadata = metadata
@@ -147,7 +147,7 @@ class ForensicDirectoryTree(Tree):
     def render_label(self, node, base_style, control_style) -> Text:
         label = node.label
         if isinstance(label, str):
-            if "[" in label and "]" in label and ("red" in label or "italic" in label or "error" in label):
+            if "[" in label and "]" in label:
                 node_label = Text.from_markup(label)
             else:
                 node_label = Text(label)
@@ -162,12 +162,12 @@ class ForensicDirectoryTree(Tree):
         
         if isinstance(data, VFSNode):
             if data.type == FileType.DIR:
-                node_label.stylize("bold cyan")
+                node_label.stylize("bold blue")
             elif getattr(data, "is_deleted", False):
                 node_label.stylize("strike red")
             elif data.type == FileType.FILE:
                 node_label.stylize("green")
         elif isinstance(data, (PartitionInfo, VFS, EvidenceMetadata)):
-            node_label.stylize("bold magenta")
+            node_label.stylize("bold cyan")
                 
         return node_label
